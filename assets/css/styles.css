@@ -477,14 +477,14 @@ main,.topbar,.foot,.dock,.progress,.rail,.mood{ position:relative; z-index:1; }
 .scene__veil{
   position:absolute; inset:0; z-index:1;
   background:
-    linear-gradient(180deg,rgba(255,250,241,.74) 0%,rgba(255,250,241,.50) 38%,rgba(255,250,241,.54) 68%,rgba(255,250,241,.88) 100%),
-    radial-gradient(120% 80% at 50% 50%,transparent 34%,rgba(255,248,236,.46));
+    linear-gradient(180deg,rgba(255,250,241,.78) 0%,rgba(255,250,241,.62) 34%,rgba(255,250,241,.64) 68%,rgba(255,250,241,.92) 100%),
+    radial-gradient(120% 80% at 50% 50%,transparent 30%,rgba(255,248,236,.54));
 }
 .scene--dark{ --ink-3:#a08ea6; --gold-ink:var(--gold-lt); }
 .scene--dark .scene__veil{
   background:
-    linear-gradient(180deg,rgba(28,16,34,.62) 0%,rgba(28,16,34,.72) 40%,rgba(28,16,34,.74) 70%,rgba(28,16,34,.92) 100%),
-    radial-gradient(120% 80% at 50% 50%,transparent 34%,rgba(20,10,26,.5));
+    linear-gradient(180deg,rgba(28,16,34,.66) 0%,rgba(28,16,34,.76) 36%,rgba(28,16,34,.80) 70%,rgba(28,16,34,.95) 100%),
+    radial-gradient(120% 80% at 50% 50%,transparent 30%,rgba(20,10,26,.56));
 }
 .scene--dark .scene__inner{ color:#fff6e8; }
 .scene--dark .scene__inner .scene__body{ color:rgba(255,246,232,.82); }
@@ -492,11 +492,11 @@ main,.topbar,.foot,.dock,.progress,.rail,.mood{ position:relative; z-index:1; }
 .scene--dark .scene__inner .scene__quote{ color:#fff6e8; }
 /* type keeps its edge over a busy photo — a soft glow, never a solid plate */
 .scene__title,.scene__body,.scene__quote,.scene__label,.scene__kicker,.scene__next,.scene__of{
-  text-shadow:0 1px 14px rgba(255,250,241,.85),0 0 3px rgba(255,250,241,.7);
+  text-shadow:0 2px 18px rgba(255,250,241,.95),0 0 6px rgba(255,250,241,.85);
 }
 .scene--dark .scene__title,.scene--dark .scene__body,.scene--dark .scene__quote,
 .scene--dark .scene__label,.scene--dark .scene__kicker,.scene--dark .scene__next,.scene--dark .scene__of{
-  text-shadow:0 2px 16px rgba(6,2,10,.9),0 0 5px rgba(6,2,10,.7);
+  text-shadow:0 3px 20px rgba(6,2,10,.95),0 0 7px rgba(6,2,10,.8);
 }
 .scene__inner{
   position:relative; z-index:2; width:100%; max-width:var(--wrap);
