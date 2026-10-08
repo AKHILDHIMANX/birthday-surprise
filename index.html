@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#fffaf2" />
+<title>Happy Birthday, Pardeep ✦ The Star I Wore For You</title>
+<meta name="description" content="Pardeep Poswal — a birthday story in chapters. Scrolling is the whole story." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Outfit:wght@200;300;400;500;600&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="assets/css/styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+</head>
+<body class="is-loading">
+
+<!-- ══════════════ AMBIENT BACKDROP + WEATHER ══════════════ -->
+<div class="backdrop" aria-hidden="true">
+  <div class="backdrop__glow backdrop__glow--a"></div>
+  <div class="backdrop__glow backdrop__glow--b"></div>
+  <div class="backdrop__glow backdrop__glow--c"></div>
+  <div class="sunrays" id="sunrays"></div>
+  <div class="backdrop__grain"></div>
+  <canvas id="fx-canvas"></canvas>
+</div>
+
+<!-- ══════════════ TOP BAR ══════════════ -->
+<header class="topbar" id="topbar">
+  <a class="topbar__mark" href="#hero">
+    <span class="topbar__star">✦</span>
+    <span class="topbar__name" data-bind="meta.firstName">—</span>
+  </a>
+  <nav class="topbar__nav">
+    <a href="#story">Kahani</a>
+    <a href="#eleven">11:11</a>
+    <a href="#journey">Safar</a>
+    <a href="#videos">Videos</a>
+    <a href="#hug">Hug</a>
+    <a href="#letter">Chitthi</a>
+  </nav>
+</header>
+
+<!-- ══════════════ SCROLL PROGRESS ══════════════ -->
+<div class="progress" aria-hidden="true">
+  <span class="progress__bar" id="progress-bar"></span>
+  <span class="progress__num" id="progress-num">0%</span>
+</div>
+
+<!-- ══════════════ CHAPTER RAIL ══════════════ -->
+<aside class="rail" id="rail" aria-hidden="true"></aside>
+
+<!-- ══════════════ WEATHER / SEASON HUD ══════════════ -->
+<div class="mood" id="mood" aria-hidden="true">
+  <span class="mood__ico" id="mood-ico">✦</span>
+  <span class="mood__name" id="mood-name">—</span>
+</div>
+
+<!-- ══════════════ 0 · THE GATE ══════════════ -->
+<div class="gate" id="gate">
+  <div class="gate__inner">
+    <p class="gate__eyebrow reveal" data-bind="gate.eyebrow"></p>
+    <p class="gate__headline" data-bind="gate.headline"></p>
+    <p class="gate__note reveal" data-bind="gate.note"></p>
+
+    <div class="envelope" id="envelope" role="button" tabindex="0"
+         aria-keyshortcuts="Enter Space">
+      <span class="sr-only">Open — </span>
+      <div class="envelope__back"></div>
+      <div class="envelope__card">
+        <span class="envelope__cardKicker" data-bind="meta.occasion"></span>
+        <span class="envelope__cardName" data-bind="meta.fullName"></span>
+        <span class="envelope__cardFrom" data-bind="meta.fromWhom"></span>
+      </div>
+      <div class="envelope__front"></div>
+      <div class="envelope__flap"></div>
+      <div class="envelope__seal"><span data-bind="gate.sealText"></span></div>
+    </div>
+
+    <button class="btn btn--gold" id="gate-open" type="button" data-bind="gate.openButton"></button>
+    <button class="linkish gate__skip" id="gate-skip" type="button" data-bind="gate.skipButton"></button>
+  </div>
+</div>
+
+<main id="main">
+
+  <!-- ══════════════ 1 · HERO ══════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero__stars" id="hero-stars" aria-hidden="true"></div>
+    <div class="hero__inner">
+      <p class="hero__kicker" id="hero-kicker"></p>
+
+      <h1 class="hero__title">
+        <span class="line"><span class="line__in" data-bind="hero.line1"></span></span>
+        <span class="line"><span class="line__in hero__title-accent" data-bind="hero.line2"></span></span>
+      </h1>
+
+      <p class="hero__name reveal" id="hero-name"></p>
+      <p class="hero__sub reveal" id="hero-sub"></p>
+
+      <!-- COUNTDOWN -->
+      <div class="count" id="countdown" hidden>
+        <p class="count__title" data-bind="countdown.title"></p>
+        <div class="count__grid">
+          <div class="count__cell"><b id="cd-d">00</b><span>din</span></div>
+          <div class="count__cell"><b id="cd-h">00</b><span>ghante</span></div>
+          <div class="count__cell"><b id="cd-m">00</b><span>minute</span></div>
+          <div class="count__cell"><b id="cd-s">00</b><span>second</span></div>
+        </div>
+        <p class="count__sub" data-bind="countdown.sub"></p>
+        <p class="count__past" id="cd-past" hidden>
+          <b data-bind="countdown.pastTitle"></b>
+          <span data-bind="countdown.pastSub"></span>
+        </p>
+      </div>
+
+      <ul class="hero__stats" id="hero-stats"></ul>
+    </div>
+
+    <div class="hero__scroll" aria-hidden="true">
+      <span data-bind="hero.scrollCue"></span>
+      <span class="hero__scrollLine"></span>
+    </div>
+  </section>
+
+  <!-- ══════════════ 2 · STORY — pinned, scroll-scrubbed scenes ══════════════ -->
+  <section class="section section--story" id="story">
+    <h2 class="sr-only">Pardeep ki kahani — safar ke shabdon mein</h2>
+    <div class="story" id="chapters"></div>
+  </section>
+
+  <!-- ══════════════ 3 · 11:11 ══════════════ -->
+  <section class="eleven" id="eleven">
+    <div class="eleven__pin">
+      <header class="eleven__head">
+        <p class="head__kicker" data-bind="elevenTitle.kicker"></p>
+        <h2 class="eleven__clock" id="eleven-clock">11:11</h2>
+        <p class="eleven__sub" data-bind="elevenTitle.sub"></p>
+      </header>
+
+      <div class="eleven__lines" id="eleven-lines"></div>
+
+      <button class="btn btn--gold btn--lg" id="wish-btn" type="button" data-bind="eleven.makeWish"></button>
+      <p class="eleven__wish" id="eleven-wish" hidden>
+        <b data-bind="eleven.wish"></b>
+        <span data-bind-html="eleven.wishSub"></span>
+      </p>
+      <p class="eleven__after" id="eleven-after" hidden data-bind="eleven.after"></p>
+    </div>
+  </section>
+
+  <!-- ══════════════ 4 · JOURNEY — vertical scroll, horizontal travel ══════════════ -->
+  <section class="section section--journey" id="journey">
+    <h2 class="sr-only">Poora safar</h2>
+    <div class="journey" id="journey-track">
+      <div class="journey__pin">
+        <header class="journey__head">
+          <p class="head__kicker" data-bind="journeyTitle.kicker"></p>
+          <h2 class="journey__title" data-split data-bind="journeyTitle.title"></h2>
+          <p class="journey__sub" data-bind="journeyTitle.sub"></p>
+        </header>
+        <div class="journey__rail">
+          <div class="journey__track" id="journey-track-inner"></div>
+        </div>
+        <div class="journey__meter"><span class="journey__meterFill" id="journey-meter"></span></div>
+        <div class="journey__hint" aria-hidden="true">
+          <span class="journey__hintArrow">→</span> scroll jaari rakho
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 5 · TIMELINE ══════════════ -->
+  <section class="section section--timeline" id="timeline">
+    <div class="wrap">
+      <header class="head" data-head>
+        <p class="head__kicker" data-bind="timelineTitle.kicker"></p>
+        <h2 class="head__title" data-split data-bind="timelineTitle.title"></h2>
+        <p class="head__sub reveal" data-bind="timelineTitle.sub"></p>
+      </header>
+      <ol class="tl" id="tl"></ol>
+    </div>
+  </section>
+
+  <!-- ══════════════ 6 · VIDEOS — pinned, travels with the scroll ══════════════ -->
+  <section class="section section--videos" id="videos">
+    <div class="vstory" id="vstory">
+      <div class="vstory__pin">
+        <header class="head vstory__head" data-head>
+          <p class="head__kicker" data-bind="videosTitle.kicker"></p>
+          <h2 class="head__title" data-split data-bind="videosTitle.title"></h2>
+          <p class="head__sub reveal" data-bind="videosTitle.sub"></p>
+        </header>
+        <div class="vstory__rail">
+          <div class="vgrid" id="vgrid"></div>
+        </div>
+        <div class="vstory__foot">
+          <div class="vstory__meter"><span id="vstory-fill"></span></div>
+          <p class="vstory__hint" aria-hidden="true">scroll jaari rakho →</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 8 · MESSAGES ══════════════ -->
+  <section class="section section--messages" id="messages">
+    <div class="wrap">
+      <header class="head" data-head>
+        <p class="head__kicker" data-bind="messagesTitle.kicker"></p>
+        <h2 class="head__title" data-split data-bind="messagesTitle.title"></h2>
+        <p class="head__sub reveal" data-bind="messagesTitle.sub"></p>
+      </header>
+      <div class="cards" id="cards"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 9 · GALLERY ══════════════ -->
+  <section class="section section--gallery" id="gallery">
+    <div class="wrap">
+      <header class="head" data-head>
+        <p class="head__kicker" data-bind="galleryTitle.kicker"></p>
+        <h2 class="head__title" data-split data-bind="galleryTitle.title"></h2>
+        <p class="head__sub reveal" data-bind="galleryTitle.sub"></p>
+      </header>
+      <div class="masonry" id="masonry"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 10 · LETTER ══════════════ -->
+  <section class="section section--letter" id="letter">
+    <div class="wrap wrap--narrow">
+      <header class="head" data-head>
+        <p class="head__kicker" data-bind="letter.kicker"></p>
+        <h2 class="head__title" data-split data-bind="letter.title"></h2>
+      </header>
+
+      <div class="letter" id="letter-folded">
+        <div class="letter__seal" aria-hidden="true">
+          <svg viewBox="0 0 100 100" width="58" height="58"><use href="#wax"/></svg>
+        </div>
+        <button class="btn btn--gold" id="letter-open" type="button" data-bind="letter.unfoldButton"></button>
+      </div>
+
+      <article class="letter__open" id="letter-open-body" hidden>
+        <p class="letter__salutation" data-bind="letter.salutation"></p>
+        <div class="letter__body" id="letter-body"></div>
+        <footer class="letter__foot">
+          <p class="letter__signoff" data-bind="letter.signoff"></p>
+          <p class="letter__signature" data-signature data-bind="letter.signature"></p>
+        </footer>
+      </article>
+    </div>
+  </section>
+
+
+  <!-- ══════════════ 11b · VIRTUAL HUG ══════════════ -->
+  <section class="hugsec" id="hug">
+    <div class="wrap wrap--narrow hugsec__wrap">
+      <p class="head__kicker">Ek chhota sa shukriya</p>
+      <h2 class="hugsec__title">Virtual Hug</h2>
+      <p class="hugsec__sub">
+        Yahan koi haath nahi hai — par ek button hai. dabao. Itna kaafi hai.
+      </p>
+      <button class="hugbtn" id="hug-btn" type="button">
+        <span class="hugbtn__ring hugbtn__ring--1" aria-hidden="true"></span>
+        <span class="hugbtn__ring hugbtn__ring--2" aria-hidden="true"></span>
+        <span class="hugbtn__heart" aria-hidden="true">😻</span>
+        <span class="hugbtn__label">Virtual Hug</span>
+      </button>
+      <p class="hugsec__note">
+        <span class="hugsec__must" id="hug-must">yeh dabana zaroori hai</span>
+        <kbd>H</kbd> se bhi
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════ HUG OVERLAY ══════════════ -->
+  <div class="hugveil" id="hug-veil" hidden role="dialog" aria-modal="true" aria-label="Virtual hug">
+    <div class="hugveil__stage">
+      <div class="hugveil__arms" aria-hidden="true"><span></span><span></span></div>
+      <div class="hugveil__pulse" aria-hidden="true"></div>
+      <p class="hugveil__big">Yeh lo ek virtual hug</p>
+      <p class="hugveil__small">
+        Sone se pehle yeh le lo — free of cost, koi delivery nahi, koi returns nahi.
+      </p>
+      <button class="btn btn--gold" id="hug-close" type="button">Shukriya 🤗</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ 12 · FINALE ══════════════ -->
+  <section class="section section--finale" id="finale">
+    <div class="wrap wrap--narrow finale__wrap">
+      <header class="head">
+        <p class="head__kicker" data-bind="gate.eyebrow"></p>
+        <h2 class="head__title" data-split data-bind="finale.wishTitle"></h2>
+        <p class="head__sub reveal" data-bind="finale.wishBody"></p>
+      </header>
+
+      <div class="cake" id="cake">
+        <svg class="cake__svg" viewBox="0 0 320 260" role="img" aria-label="Birthday cake with one lit candle">
+          <defs>
+            <radialGradient id="flameGrad" cx="50%" cy="60%" r="60%">
+              <stop offset="0%" stop-color="#fff6cf"/><stop offset="45%" stop-color="#ffca6b"/><stop offset="100%" stop-color="#ff7a3c"/>
+            </radialGradient>
+            <linearGradient id="icingGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#fffdf8"/><stop offset="100%" stop-color="#f2ddc9"/>
+            </linearGradient>
+            <filter id="soften" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+          </defs>
+          <g class="cake__candle">
+            <rect x="152" y="96" width="16" height="46" rx="5" fill="#fff8ef" stroke="rgba(0,0,0,.08)"/>
+            <path d="M160 96 l7 10 h-14 z" fill="#d94f76"/>
+          </g>
+          <g class="cake__flame" id="flame">
+            <ellipse cx="160" cy="72" rx="34" ry="40" fill="#ff9a3c" opacity=".5" filter="url(#soften)"/>
+            <path d="M160 42c14 18 20 27 20 36a20 20 0 0 1-40 0c0-9 6-18 20-36z" fill="url(#flameGrad)"/>
+            <path d="M160 58c6 9 9 14 9 19a9 9 0 0 1-18 0c0-5 3-10 9-19z" fill="#fffdf2"/>
+          </g>
+          <g class="cake__body">
+            <ellipse cx="160" cy="216" rx="112" ry="16" fill="rgba(42,22,51,.14)"/>
+            <rect x="52" y="150" width="216" height="62" rx="14" fill="url(#icingGrad)"/>
+            <path d="M52 168c14 0 14 14 28 14s14-14 28-14 14 14 28 14 14-14 28-14 14 14 28 14 14-14 28-14 14 14 28 14 14-14 28-14v18H52z" fill="#fff" opacity=".7"/>
+            <g fill="#c98a2e">
+              <circle cx="86" cy="192" r="3.5"/><circle cx="118" cy="192" r="3.5"/><circle cx="160" cy="192" r="3.5"/><circle cx="202" cy="192" r="3.5"/><circle cx="234" cy="192" r="3.5"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <button class="btn btn--gold btn--lg" id="blow" type="button" data-bind="finale.candleButton"></button>
+
+      <div class="after" id="after" hidden>
+        <h3 class="after__title" data-bind="finale.afterWish.title"></h3>
+        <p class="after__body" data-bind="finale.afterWish.body"></p>
+        <p class="after__signoff" data-bind="finale.afterWish.signoff"></p>
+        <a class="btn btn--ghost" id="replay" type="button">Phir se confetti ↺</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 12 · CLOSING QUOTE ══════════════ -->
+  <section class="closing" id="closing">
+    <div class="wrap wrap--narrow closing__wrap">
+      <div class="closing__star" aria-hidden="true">✦</div>
+      <p class="closing__hi" id="closing-hi"></p>
+      <p class="closing__sign" id="closing-sign"></p>
+      <p class="closing__signSub" id="closing-signsub"></p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p class="foot__line" data-bind="meta.dedication"></p>
+    <p class="foot__meta"><span data-bind="meta.fullName"></span> · <span data-bind="meta.birthdayDate"></span></p>
+  </footer>
+</main>
+
+<!-- ══════════════ FLOATING DOCK ══════════════ -->
+<div class="dock" id="dock" hidden>
+  <button class="dock__btn dock__btn--icon" id="dock-hug" type="button" title="Virtual hug (H key)">
+    <span aria-hidden="true">😻</span><span class="sr-only">Virtual hug</span>
+  </button>
+  <button class="dock__btn dock__btn--icon" id="dock-wish" type="button" title="11:11 wish">
+    <span aria-hidden="true">✦</span><span class="sr-only">Go to the 11:11 wish</span>
+  </button>
+  <span class="dock__sep" aria-hidden="true"></span>
+  <button class="dock__btn" id="dock-music" type="button" aria-pressed="false">
+    <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span class="dock__label" data-bind="backgroundTrack.title"></span>
+  </button>
+  <button class="dock__btn dock__btn--icon" id="dock-top" type="button" title="Back to top">
+    <span aria-hidden="true">↑</span><span class="sr-only">Back to top</span>
+  </button>
+</div>
+
+<!-- forward-scroll is held here until the current button is pressed -->
+<div class="lockhint" id="lockhint" hidden role="status" aria-live="polite">
+  <span class="lockhint__dot" aria-hidden="true"></span>
+  <span class="lockhint__text" id="lockhint-text"></span>
+</div>
+
+<!-- ══════════════ CHAPTER READER ══════════════ -->
+<div class="reader" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="reader-title">
+  <div class="reader__scrim" data-reader-close></div>
+  <article class="reader__panel">
+    <button class="reader__close" type="button" data-reader-close aria-label="Close chapter">✕</button>
+    <p class="reader__kicker" id="reader-kicker"></p>
+    <h2 class="reader__title" id="reader-title"></h2>
+    <div class="reader__body" id="reader-body"></div>
+    <p class="reader__quote" id="reader-quote"></p>
+    <button class="btn btn--sm reader__done" type="button" data-reader-close>Band karo</button>
+  </article>
+</div>
+
+<!-- ══════════════ VIDEO LIGHTBOX ══════════════ -->
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Video player">
+  <div class="lb__scrim" data-close></div>
+  <div class="lb__panel">
+    <button class="lb__close" type="button" data-close aria-label="Close video">✕</button>
+    <div class="lb__stage">
+      <video id="lb-video" playsinline controls preload="metadata"></video>
+      <div class="lb__empty" id="lb-empty" hidden><p>Video yahan drop karo 👆</p><code id="lb-path"></code></div>
+    </div>
+    <div class="lb__meta">
+      <h3 id="lb-title"></h3>
+      <p id="lb-caption"></p>
+      <div class="lb__nav">
+        <button class="btn btn--sm" id="lb-prev" type="button">← Pichhla</button>
+        <button class="btn btn--sm" id="lb-next" type="button">Agla →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ IMAGE LIGHTBOX ══════════════ -->
+<div class="lb lb--img" id="lb-img" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <div class="lb__scrim" data-close-img></div>
+  <button class="lb__close" type="button" data-close-img aria-label="Close photo">✕</button>
+  <figure class="lb__figure">
+    <img id="lb-img-el" alt="" /><figcaption id="lb-img-cap"></figcaption>
+  </figure>
+  <button class="lb__arrow lb__arrow--l" id="lb-img-prev" type="button" aria-label="Previous photo">←</button>
+  <button class="lb__arrow lb__arrow--r" id="lb-img-next" type="button" aria-label="Next photo">→</button>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="wax" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="42" fill="#b0413f"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+    <text x="50" y="66" text-anchor="middle" font-size="38" fill="#ffe7d6" font-family="Georgia, serif">★</text>
+  </symbol>
+</svg>
+
+<noscript><p style="padding:2rem;text-align:center">Ye page chalane ke liye JavaScript chahiye. ✦</p></noscript>
+
+<script src="assets/js/content.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
