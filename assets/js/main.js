@@ -77,97 +77,15 @@
     });
   }
 
-  /* ── 2b · FORCED STEP ────────────────────────────────────────────────
-     Some buttons are not optional: hug, wish, candle, confetti. While a
-     step is armed, forward scrolling is held until it is pressed (scrolling
-     back up always stays possible). */
-  var HUGGED = sessionStorage.getItem("hbd_hugged") === "1";
-  var HOLD = (function () {
-    var cur = null, limit = 0, patched = false, lastY = 0, shown = false;
-    function node() { return document.getElementById("lockhint"); }
-    function text() { return document.getElementById("lockhint-text"); }
-    function active() { return !!cur && !cur.done(); }
-    /* the pill only earns its place while the reader is actually stuck —
-       sitting right at the wall. Scroll away from it and it stays quiet,
-       so it never follows you around the whole page. */
-    function atWall() { return window.pageYOffset >= limit - 6; }
-    function paint() {
-      var h = node(); if (!h) return;
-      var on = active(), want = on && atWall();
-      document.documentElement.classList.toggle("is-held", on);
-      document.documentElement.classList.toggle("need-hug", !!(on && cur.id === "hug"));
-      if (on) { var t = text(); if (t && t.textContent !== cur.text) t.textContent = cur.text; }
-      if (want !== shown) { shown = want; h.hidden = !want; }
-    }
-    function hook() {
-      if (patched) return; patched = true;
-      window.addEventListener("wheel", function (e) {
-        if (active() && e.deltaY > 0) { e.preventDefault(); }
-      }, { passive: false });
-      var ty = 0;
-      window.addEventListener("touchstart", function (e) { ty = e.touches[0].clientY; }, { passive: true });
-      window.addEventListener("touchmove", function (e) {
-        if (active() && ty - e.touches[0].clientY > 6) e.preventDefault();
-      }, { passive: false });
-      window.addEventListener("keydown", function (e) {
-        if (!active()) return;
-        if (/^(ArrowDown|PageDown|End|Space| )$/i.test(e.key)) e.preventDefault();
-      });
-      var guard = false;
-      lastY = window.pageYOffset;
-      window.addEventListener("scroll", function () {
-        var y = window.pageYOffset;
-        /* a pin (the hug gate) keeps recomputing its own wall; every other
-           lock keeps the wall it was engaged on — a jump (anchor, restore,
-           dock shortcut) may never drag a mandatory step somewhere else */
-        if (cur && cur.pin) limit = cur.pin();
-        lastY = y;
-        if (!active() || guard) { paint(); return; }
-        if (y > limit + 2) {
-          guard = true;
-          window.scrollTo({ top: limit, behavior: "instant" });
-          setTimeout(function () { guard = false; }, 0);
-        }
-        paint();
-      }, { passive: true });
-    }
-    function engage(id, label, done, pin) {
-      hook();
-      cur = { id: id, text: label, done: done, pin: pin || null };
-      var y = window.pageYOffset;
-      /* a pin IS the wall (recomputed every scroll); without one the wall
-         is the spot where the lock engaged */
-      limit = cur.pin ? cur.pin() : y;
-      lastY = y;
-      paint();
-      /* a lock that engages under a restored (deep) position pulls the
-         reader back to the one button that can set them free */
-      if (y > limit) { try { window.scrollTo({ top: limit, behavior: "instant" }); } catch (e) {} }
-    }
-    function release(id) {
-      if (cur && cur.id === id) { cur = null; paint(); }
-    }
-    return { engage: engage, release: release, paint: paint,
-             is: function () { return active(); },
-             wall: function () { return limit; } };
-  })();
-
-  /* the hug gate's own wall: everything above the hug section stays free,
-     but nothing goes past it until the button is pressed */
-  function hugWall() {
-    var s = document.getElementById("hug");
-    if (!s) return 0;
-    var top = s.getBoundingClientRect().top + window.pageYOffset;
-    return Math.max(0, Math.round(top - window.innerHeight * 0.45));
-  }
+  /* Buttons here are never mandatory — every hug, wish, candle and confetti
+     is an invitation, not a gate. Nothing ever locks the scroll. */
 
   /* ── SUPER SMOOTH SCROLL ───────────────────────────────────────────────
      The wheel stops being a jump and becomes a glide: every delta is poured
      into a single target and one rAF walks the page towards it, so a hard
-     flick coasts to a stop instead of snapping. The mandatory-step wall is
-     re-checked on every frame — a glide may never cross it — and every jump
-     (dock, rail, letter, finale) rides the same easing instead of the
-     browser's. Reduced-motion readers keep plain native scrolling. */
+     flick coasts to a stop instead of snapping. Every jump (dock, rail,
+     letter, finale) rides the same easing. Reduced-motion readers keep
+     plain native scrolling. Nothing ever holds the page. */
   var SMOOTH = (function () {
     var on = !REDUCED;
     var target = window.pageYOffset, cur = target, job = 0;
@@ -183,7 +101,6 @@
     function cap(y) {
       if (!(y > 0)) y = 0;
       var m = max(); if (y > m) y = m;
-      if (HOLD.is()) { var w = HOLD.wall(); if (y > w) y = w; }   /* the wall always wins */
       return y;
     }
     function place(y) { window.scrollTo({ top: y, behavior: "instant" }); }
@@ -227,7 +144,6 @@
         else if (e.deltaMode === 2) d *= window.innerHeight;
         if (!d) return;
         e.preventDefault();
-        if (HOLD.is() && d > 0) return;   /* the wall still says no — HOLD paints the pill */
         target = cap(target + d);
         glide();
       }, { passive: false });
@@ -238,24 +154,6 @@
     }
     return { to: to, toNode: toNode, isOn: function () { return on; } };
   })();
-
-  /* A mandatory step keeps asking until it is done — but it never jumps the
-     queue: if another step already holds the page, it simply waits its turn. */
-  function holdWhen(node, id, label, done, ratio, settle) {
-    if (!node) return;
-    var need = ratio == null ? 0.55 : ratio;
-    var want = settle || 5, hits = 0;
-    var iv = setInterval(function () {
-      if (done()) { clearInterval(iv); return; }
-      if (HOLD.is()) { hits = 0; return; }
-      var r = node.getBoundingClientRect();
-      var vh = window.innerHeight;
-      var seen = r.height ? Math.min(r.bottom, vh) - Math.max(r.top, 0) : 0;
-      hits = (r.width && seen / r.height >= need) ? hits + 1 : 0;
-      /* settle first — never pin the limit while a smooth scroll is running */
-      if (hits >= want) { hits = 0; HOLD.engage(id, label, done); }
-    }, 240);
-  }
 
   /* ── 3 · TEXT SPLITTING ──────────────────────────────────────────────── */
   function splitText(node) {
@@ -1015,37 +913,14 @@
       sessionStorage.setItem(WKEY, "1");
       host.dataset.done = "1";
       host.classList.add("is-done");
-      HOLD.release("eleven");
       var w = $("#eleven-wish"), a = $("#eleven-after");
-      setTimeout(function () { if (w) { w.hidden = false; HOLD.paint(); } }, 400);
+      setTimeout(function () { if (w) w.hidden = false; }, 400);
       setTimeout(function () { if (a) a.hidden = false; }, 1900);
       var r = host.getBoundingClientRect();
       setTimeout(function () { FX.cannons(); FX.burst(r.left + r.width / 2, r.top + r.height * .45, 90, { color: "#f0c46a" }); }, 260);
       FX.rain(3600);
     });
-    /* the lock's own wall: the last stretch of the sticky pin where the
-       button is fully lit, armed and still on screen — a jump (rail, dock,
-       deep link) may never park the reader past the one thing that can set
-       them free; if it does, engage pulls them back to this line */
-    function wishWall() {
-      var vh = window.innerHeight;
-      var y = window.pageYOffset;
-      var top = y + host.getBoundingClientRect().top;
-      var len = Math.max(1, host.offsetHeight - vh);
-      return Math.max(0, Math.round(top + len * 0.78));
     }
-    /* nothing past 11:11 until the wish is actually made */
-    (function arm() {
-      if (host.dataset.done) return;
-      var past = window.pageYOffset > wishWall();   /* a jump may outrun the armed flag */
-      if ((host.classList.contains("is-armed") || past) && HUGGED && !HOLD.is()) {
-        HOLD.engage("eleven", "Wish karo — uske aage nahi badhoge", function () {
-          return host.dataset.done === "1";
-        }, wishWall);
-      }
-      setTimeout(arm, 220);
-    })();
-  }
 
   /* ── 13 · TIMELINE ───────────────────────────────────────────────────── */
   function renderTimeline() {
@@ -1416,12 +1291,9 @@
       after.hidden = false;
     }
     if (done) { blownQuiet(); $$("h3,p,.btn", after).forEach(function (n) { observe(n); }); }
-    holdWhen(blow, "blow", "Mombatti bujhao — phir aage",
-      function () { return done; }, .6, 4);
     blow.addEventListener("click", function () {
       if (done) return; done = true;
       sessionStorage.setItem(BKEY, "1");
-      HOLD.release("blow");
       if (smoke.parentNode) smoke.parentNode.removeChild(smoke);
       cake.classList.add("is-out");
       setTimeout(function () {
@@ -1438,13 +1310,9 @@
       blow.textContent = "Ho gaya \u2728";
     });
     var replay = document.getElementById("replay"), replayed = sessionStorage.getItem(RKEY) === "1";
-    /* settle ticks let the post-wish smooth scroll finish before we pin */
-    holdWhen(after, "replay", "Confetti ek baar aur chalao",
-      function () { return replayed; }, .5, REDUCED ? 2 : 6);
     replay.addEventListener("click", function () {
       replayed = true;
       sessionStorage.setItem(RKEY, "1");
-      HOLD.release("replay");
       FX.cannons(); FX.rain(2600);
     });
   }
@@ -1462,10 +1330,7 @@
       sessionStorage.setItem(KEY, "1");
       startHero();
       if (!silent) { FX.cannons(); setTimeout(function () { FX.rain(2200); }, 200); }
-      /* first thing on this page is a hug — it is not optional, but it is
-         asked for once per session, never again on a refresh */
-      if (!HUGGED) HOLD.engage("hug", "Pehle hug lo 😻", function () { return HUGGED; }, hugWall);
-    }
+      }
     function openGate() {
       if (gate.dataset.done) return;
       gate.dataset.done = "1";
@@ -1556,9 +1421,7 @@
     btn.addEventListener("click", function () {
       var r = btn.getBoundingClientRect();
       burst(r.left + r.width / 2, r.top + r.height / 2);
-      HUGGED = true;
       sessionStorage.setItem("hbd_hugged", "1");
-      HOLD.release("hug");
       veil.hidden = false;
       document.body.classList.add("locked");
       sec.classList.add("is-hugging");
@@ -1579,9 +1442,8 @@
     if (dockHug) dockHug.addEventListener("click", function () { btn.click(); });
     var dockWish = $("#dock-wish");
     if (dockWish) dockWish.addEventListener("click", function () {
-      /* jump straight to where the 11:11 button is armed, then press it for
-         them — otherwise the click lands while the button is still
-         pointer-events:none and silently does nothing. */
+      /* jump straight to where the 11:11 wish sits, then press the wish
+         button for them — the button is invited, never forced */
       var e = $("#eleven"), w = $("#wish-btn");
       if (!e || !w) return;
       var len = Math.max(1, e.offsetHeight - window.innerHeight);
