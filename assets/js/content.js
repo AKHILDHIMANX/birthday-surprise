@@ -136,7 +136,7 @@ var BIRTHDAY = {
     { title: "Saath gaao", subtitle: "Khoobsurat zulm", src: "assets/media/video/04.mp4", poster: "assets/media/images/18-terminus-night.svg", caption: "Midnight magic" }
   ],
 
-  backgroundTrack: { enabled: true, title: "Baaton Ko Teri", src: "assets/media/audio/00-baaton-ko-teri.mp3" },
+  backgroundTrack: { enabled: true, title: "Baaton Ko Teri", src: "assets/media/audio/00-baaton-ko-teri.m4a" },
   audio: [
     { title: "Maa ka message", subtitle: "Teen baar record kiya", src: "assets/media/audio/01-from-mum.mp3" },
     { title: "Sabse kareeb", subtitle: "Raat 2 baje, of course", src: "assets/media/audio/02-from-friend.mp3" },

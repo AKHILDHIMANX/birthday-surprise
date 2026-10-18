@@ -1045,8 +1045,9 @@
       wrap.appendChild(row);
 
       var p = { row: row, btn: btn, wave: wave, bars: $$(".player__bar", wave), time: time, audio: new Audio(), data: a, N: N };
-      p.audio.preload = "metadata";
-      if (a.src) p.audio.src = a.src; else p.audio.preload = "none";
+      /* no audio is fetched up-front — each clip loads only when pressed */
+      p.audio.preload = "none";
+      if (a.src) p.audio.src = a.src;
 
       p.audio.addEventListener("loadedmetadata", function () {
         time.innerHTML = "<b>0:00</b> / " + fmt(p.audio.duration);
@@ -1086,7 +1087,7 @@
   function next(p) { var i = players.indexOf(p); if (i > -1 && i < players.length - 1) toggle(players[i + 1]); }
 
   /* the song, shared between the gate hand-off and the dock */
-  var MUSIC = { song: null, play: function () {}, stop: function () {}, toggle: function () {} };
+  var MUSIC = { song: null, play: function () {}, stop: function () {}, toggle: function () {}, unlock: function () {} };
 
   function initDock() {
     var dock = $("#dock"), btn = $("#dock-music"), top = $("#dock-top");
@@ -1121,13 +1122,44 @@
       });
       paint(false);
 
+      /* if a delayed autoplay is ever refused, the very next touch/key starts
+         the song — so music is never silently lost */
+      var tapArmed = false;
+      function armFirstTouch() {
+        if (tapArmed) return; tapArmed = true;
+        var kick = function () {
+          window.removeEventListener("pointerdown", kick);
+          window.removeEventListener("touchstart", kick);
+          window.removeEventListener("keydown", kick);
+          MUSIC.play();
+        };
+        window.addEventListener("pointerdown", kick, { passive: true });
+        window.addEventListener("touchstart", kick, { passive: true });
+        window.addEventListener("keydown", kick);
+      }
+
       MUSIC.song = song;
       MUSIC.play = function () {
         var p = song.play();
-        if (p && p.then) p.then(function () { paint(true); }).catch(function () {});
+        if (p && p.then) return p.then(function () { paint(true); }).catch(function () { armFirstTouch(); });
+        paint(true);
       };
       MUSIC.stop = function () { song.pause(); paint(false); };
       MUSIC.toggle = function () { btn.click(); };
+      /* called inside the gate's real click: it touches the element once so a
+         later automatic play() is permitted (iOS/Safari otherwise refuse a bare
+         delayed play), and starts fetching the bytes so the song is ready the
+         moment the Happy Birthday tune ends. */
+      MUSIC.unlock = function () {
+        try {
+          song.muted = true;
+          var p = song.play();
+          var done = function () { try { song.pause(); song.currentTime = 0; } catch (e) {} song.muted = false; };
+          if (p && p.then) p.then(done).catch(function () { song.muted = false; });
+          else done();
+        } catch (e) { song.muted = false; }
+        try { song.preload = "auto"; } catch (e) {}
+      };
     } else {
       btn.hidden = true;
     }
@@ -1140,6 +1172,7 @@
 
   /* Happy Birthday melody first, then the song — starts from the real click */
   function playIntro() {
+    MUSIC.unlock();
     var secs = 0;
     try { secs = TUNE.play() || 0; } catch (e) { secs = 0; }
     if (secs > 0) setTimeout(function () { MUSIC.play(); }, secs * 1000 + 300);
@@ -1334,7 +1367,10 @@
     function openGate() {
       if (gate.dataset.done) return;
       gate.dataset.done = "1";
-      /* real user gesture — the one moment a browser allows audio */
+      /* real user gesture — the one moment a browser allows audio. Unlock the
+         song right here (inside the click) so it can start on its own once the
+         Happy Birthday tune ends — no second tap needed. */
+      MUSIC.unlock();
       setTimeout(playIntro, 640);
       env.classList.add("is-open");
       open.style.opacity = 0; skip.style.opacity = 0;
@@ -1349,7 +1385,7 @@
     env.addEventListener("click", openGate);
     env.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGate(); } });
     open.addEventListener("click", openGate);
-    skip.addEventListener("click", function () { skipGate(false); playIntro(); });
+    skip.addEventListener("click", function () { skipGate(false); MUSIC.unlock(); playIntro(); });
   }
 
   /* ══════════════════════════════════════════════════════════════════════
