@@ -1233,6 +1233,24 @@ main,.topbar,.foot,.dock,.progress,.rail,.mood{ position:relative; z-index:1; }
 }
 @media (hover:none){ .gshot__cap{ opacity:1; transform:none } }
 
+/* ── mobile / touch: same look, none of the per-frame cost ──────────────
+   A phone GPU chokes on: huge blurred glows drifting, film grain
+   repainting, a live backdrop-filter on fixed bars, and a filter pass over
+   a full-screen photo on every scroll frame. The story does not change. */
+@media (max-width:860px){
+  .backdrop__glow{ filter:blur(50px); animation:none!important; }
+  .backdrop__grain{ display:none; }
+  .sunrays.is-on{ animation:none!important; }
+  .topbar.is-stuck,.mood,.dock{
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+  }
+  .topbar.is-stuck{ background:rgba(255,250,241,.94); }
+  .mood{ background:rgba(255,255,255,.92); }
+  .dock{ background:rgba(255,250,241,.94); }
+  .scene__bg img{ filter:none; }
+}
+
 /* no-motion / reduced motion: unpin everything into plain blocks */
 html.no-motion .scene{ height:auto }
 html.no-motion .scene__pin{ position:relative; height:auto; padding-block:clamp(3.5rem,9vh,6rem); overflow:visible }

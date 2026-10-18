@@ -20,6 +20,14 @@
     return n;
   }
   var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* The wheel-glide scroll engine is for a real mouse. On a touch screen the
+     browser already gives perfect momentum scrolling — re-driving it from
+     wheel events makes the page carry on by itself and stutter, so phones
+     keep plain native scrolling. */
+  var FINE_POINTER = !!(window.matchMedia && window.matchMedia("(hover:hover) and (pointer:fine)").matches);
+  /* phones / small screens: same story, lighter per-frame effects */
+  var LITE = !!(window.matchMedia && window.matchMedia("(max-width:860px), (hover:none)").matches);
+
   var esc = function (s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -87,7 +95,7 @@
      letter, finale) rides the same easing. Reduced-motion readers keep
      plain native scrolling. Nothing ever holds the page. */
   var SMOOTH = (function () {
-    var on = !REDUCED;
+    var on = !REDUCED && FINE_POINTER;
     var target = window.pageYOffset, cur = target, job = 0;
     var mx = -1, mxAt = 0;
     function max() {                       /* cached — one layout read is plenty */
@@ -279,7 +287,7 @@
       })();
     }
     makeDust();
-    setInterval(driftDust, 50);
+    setInterval(function () { if (!document.hidden) driftDust(); }, 50);
     return { burst: burst, cannons: cannons, rain: rain, dust: driftDust };
   })();
 
@@ -291,7 +299,7 @@
     if (!cv) return { set: function () {} };
     var ctx = cv.getContext("2d"), W = 0, H = 0;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var bits = [], mode = "summer", t = 0, on = false, rafId = null;
+    var bits = [], mode = "summer", t = 0, on = false, rafId = null, frame = 0;
     var glows = [$(".backdrop__glow--a"), $(".backdrop__glow--b"), $(".backdrop__glow--c")];
     var rays = $("#sunrays");
     var ico = $("#mood-ico"), name = $("#mood-name"), hud = $("#mood");
@@ -319,12 +327,17 @@
           len: 10 + Math.random() * (mode === "storm" ? 26 : 16), a: .18 + Math.random() * .3, r: 0 });
       } else if (mode === "winter") {
         i = Math.random();
+        if (LITE) i = 1;                       /* snow only on phones, no smoke discs */
         bits.push({ k: i > .45 ? "snow" : "smoke",
           x: Math.random() * W, y: i > .45 ? -14 : H + Math.random() * 120,
           vx: (Math.random() - .5) * (i > .45 ? .5 : .28), vy: i > .45 ? .35 + Math.random() * .5 : -.28 - Math.random() * .3,
           r: i > .45 ? 1 + Math.random() * 2.2 : 34 + Math.random() * 70,
           a: i > .45 ? .35 + Math.random() * .45 : .05 + Math.random() * .07, ph: Math.random() * 6.283 });
       } else if (mode === "mist") {
+        /* the soft fog discs are radial-gradient fills — too costly to repaint
+           every frame on a phone, and the drifting glows already carry the
+           mist mood on their own */
+        if (LITE) return;
         bits.push({ k: "fog", x: Math.random() * W, y: H * (.2 + Math.random() * .7),
           vx: .18 + Math.random() * .4, vy: -.03,
           r: 90 + Math.random() * 190, a: .035 + Math.random() * .055, ph: Math.random() * 6.283 });
@@ -346,7 +359,8 @@
     function step() {
       t++;
       var n = W < 700 ? 1 : 2;
-      for (var q = 0; q < n; q++) if (bits.length < (mode === "rain" || mode === "storm" ? 260 : 90)) spawn();
+      var cap = (mode === "rain" || mode === "storm") ? (LITE ? 110 : 260) : (LITE ? 44 : 90);
+      for (var q = 0; q < n; q++) if (bits.length < cap) spawn();
 
       for (var i = bits.length - 1; i >= 0; i--) {
         var b = bits[i];
@@ -388,7 +402,8 @@
           ctx.ellipse(0, 0, b.r, b.r * .45, 0, 0, 6.283);
           ctx.fill(); ctx.restore(); ctx.globalAlpha = 1;
         } else if (b.k === "fly") {
-          ctx.fillStyle = b.c || "#ffe9a8"; ctx.shadowBlur = 10; ctx.shadowColor = b.c || "#ffe9a8";
+          ctx.fillStyle = b.c || "#ffe9a8";
+          if (!LITE) { ctx.shadowBlur = 10; ctx.shadowColor = b.c || "#ffe9a8"; }
           ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
         } else if (b.k === "star") {
           ctx.fillStyle = "#fff8e0"; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.283); ctx.fill();
@@ -397,7 +412,12 @@
       }
       rafId = raf(loop);
     }
-    function loop() { step(); }
+    function loop() {
+      /* phones run the weather at ~30fps — plenty for ambient rain/snow, and
+         it leaves the frame budget to the scroll itself */
+      if (LITE && (frame++ & 1)) { rafId = raf(loop); return; }
+      step();
+    }
 
     function paint() {
       var m = MOODS[mode] || MOODS.summer;
@@ -714,7 +734,7 @@
     var jEl = null, jTrack = null, eEl = null;
     var gEl = null, gShots = [];
     var vEl = null, vTrack = null, vCards = [], vFill = null;
-    var vh = 0, vw = 0, dirty = true, queued = false, mood = null;
+    var vh = 0, vw = 0, dirty = true, queued = false, mood = null, heroEl = null;
 
     function measure() {
       vh = window.innerHeight; vw = window.innerWidth;
@@ -744,8 +764,27 @@
       var y = window.pageYOffset || document.documentElement.scrollTop;
       var i, s, p;
 
-      var hero = document.getElementById("hero");
-      if (hero && hero.offsetHeight) hero.style.setProperty("--sp", clamp(y / hero.offsetHeight, 0, 1).toFixed(4));
+      /* ---- one layout read per frame, then all the writes ----
+         reading and writing rects in the same pass forces the browser to
+         re-layout for every element; batching reads first removes that
+         "layout thrash" that made phones stutter mid-scroll. */
+      var heroH = heroEl ? heroEl.offsetHeight : 0;
+      var eRect = eEl ? eEl.getBoundingClientRect() : null;
+      var jRect = (jEl && jTrack) ? jEl.getBoundingClientRect() : null;
+      var jShow = !!(jRect && jRect.bottom > -100 && jRect.top < vh + 100);
+      var cRects = null;
+      if (jShow) { cRects = []; for (i = 0; i < cards.length; i++) cRects.push(cards[i].getBoundingClientRect()); }
+      var gRect = (!REDUCED && gEl && gShots.length) ? gEl.getBoundingClientRect() : null;
+      var gShow = !!(gRect && gRect.bottom > -vh * .35 && gRect.top < vh + 240);
+      var sRects = null;
+      if (gShow) { sRects = []; for (i = 0; i < gShots.length; i++) sRects.push(gShots[i].getBoundingClientRect()); }
+      var vRect = (vEl && vTrack) ? vEl.getBoundingClientRect() : null;
+      var vShow = !!(vRect && vRect.bottom > -100 && vRect.top < vh + 100);
+      var vRects = null;
+      if (vShow) { vRects = []; for (i = 0; i < vCards.length; i++) vRects.push(vCards[i].getBoundingClientRect()); }
+
+      /* ---- writes ---- */
+      if (heroEl && heroH) heroEl.style.setProperty("--sp", clamp(y / heroH, 0, 1).toFixed(4));
 
       for (i = 0; i < scenes.length; i++) {
         s = scenes[i];
@@ -771,60 +810,48 @@
         }
       }
 
-      if (eEl) {
-        var er = eEl.getBoundingClientRect();
-        if (er.bottom > -100 && er.top < vh + 100) {
-          var ep = clamp(-er.top / eEl.len, 0, 1);
-          eEl.style.setProperty("--p", ep.toFixed(4));
-          eEl.classList.toggle("is-armed", ep > .62);
-        }
+      if (eRect && eRect.bottom > -100 && eRect.top < vh + 100) {
+        var ep = clamp(-eRect.top / eEl.len, 0, 1);
+        eEl.style.setProperty("--p", ep.toFixed(4));
+        eEl.classList.toggle("is-armed", ep > .62);
       }
 
-      if (jEl && jTrack) {
-        var jr = jEl.getBoundingClientRect();
-        if (jr.bottom > -100 && jr.top < vh + 100) {
-          var jp = clamp(-jr.top / jEl.len, 0, 1);
-          var dist = Math.max(0, jTrack.scrollWidth - vw);
-          jTrack.style.transform = "translate3d(" + (-jp * dist).toFixed(1) + "px,0,0)";
-          jEl.style.setProperty("--jp", jp.toFixed(4));
-          jEl.style.setProperty("--vp", clamp(1 - Math.abs(jr.top) / vh, 0, 1).toFixed(3));
-          for (i = 0; i < cards.length; i++) {
-            var cr = cards[i].getBoundingClientRect();
-            cards[i].style.setProperty("--vp", clamp(1 - Math.abs(cr.left + cr.width / 2 - vw / 2) / (vw * .62), 0, 1).toFixed(3));
-          }
+      if (jShow) {
+        var jp = clamp(-jRect.top / jEl.len, 0, 1);
+        var dist = Math.max(0, jTrack.scrollWidth - vw);
+        jTrack.style.transform = "translate3d(" + (-jp * dist).toFixed(1) + "px,0,0)";
+        jEl.style.setProperty("--jp", jp.toFixed(4));
+        jEl.style.setProperty("--vp", clamp(1 - Math.abs(jRect.top) / vh, 0, 1).toFixed(3));
+        for (i = 0; i < cards.length; i++) {
+          var cr = cRects[i];
+          cards[i].style.setProperty("--vp", clamp(1 - Math.abs(cr.left + cr.width / 2 - vw / 2) / (vw * .62), 0, 1).toFixed(3));
         }
       }
       /* photos: each frame opens a little further as you scroll */
-      if (!REDUCED && gEl && gShots.length) {
-        var gr = gEl.getBoundingClientRect();
-        if (gr.bottom > -vh * .35 && gr.top < vh + 240) {
-          for (i = 0; i < gShots.length; i++) {
-            var sr = gShots[i].getBoundingClientRect();
-            if (sr.bottom < -80 || sr.top > vh + 80) continue;
-            var gp = clamp((vh * .9 - sr.top) / (vh * .5), 0, 1);
-            if (gShots[i]._gp === gp) continue;
-            gShots[i]._gp = gp;
-            gShots[i].style.setProperty("--gp", gp.toFixed(3));
-          }
+      if (gShow) {
+        for (i = 0; i < gShots.length; i++) {
+          var sr = sRects[i];
+          if (sr.bottom < -80 || sr.top > vh + 80) continue;
+          var gp = clamp((vh * .9 - sr.top) / (vh * .5), 0, 1);
+          if (gShots[i]._gp === gp) continue;
+          gShots[i]._gp = gp;
+          gShots[i].style.setProperty("--gp", gp.toFixed(3));
         }
       }
 
       /* clip strip: rides the scroll, one card lit at a time */
-      if (vEl && vTrack) {
-        var vr = vEl.getBoundingClientRect();
-        if (vr.bottom > -100 && vr.top < vh + 100) {
-          var vp = clamp(-vr.top / vEl.len, 0, 1);
-          vTrack.style.transform = "translate3d(" + (-vp * (vEl.dist || 0)).toFixed(1) + "px,0,0)";
-          vEl.style.setProperty("--vp", vp.toFixed(4));
-          if (vFill) vFill.style.width = (vp * 100).toFixed(1) + "%";
-          for (i = 0; i < vCards.length; i++) {
-            var ccr = vCards[i].getBoundingClientRect();
-            var cv = clamp(1 - Math.abs(ccr.left + ccr.width / 2 - vw / 2) / (vw * .55), 0, 1);
-            if (vCards[i]._vp === cv) continue;
-            vCards[i]._vp = cv;
-            vCards[i].style.setProperty("--vp", cv.toFixed(3));
-            vCards[i].classList.toggle("is-live", cv > .58);
-          }
+      if (vShow) {
+        var vp = clamp(-vRect.top / vEl.len, 0, 1);
+        vTrack.style.transform = "translate3d(" + (-vp * (vEl.dist || 0)).toFixed(1) + "px,0,0)";
+        vEl.style.setProperty("--vp", vp.toFixed(4));
+        if (vFill) vFill.style.width = (vp * 100).toFixed(1) + "%";
+        for (i = 0; i < vCards.length; i++) {
+          var ccr = vRects[i];
+          var cv = clamp(1 - Math.abs(ccr.left + ccr.width / 2 - vw / 2) / (vw * .55), 0, 1);
+          if (vCards[i]._vp === cv) continue;
+          vCards[i]._vp = cv;
+          vCards[i].style.setProperty("--vp", cv.toFixed(3));
+          vCards[i].classList.toggle("is-live", cv > .58);
         }
       }
       dirty = false;
@@ -857,6 +884,7 @@
       gEl = $("#masonry"); gShots = $$(".gshot");
       vEl = $("#vstory"); vTrack = $("#vgrid"); vCards = $$("#vgrid .vcard");
       vFill = document.getElementById("vstory-fill");
+      heroEl = document.getElementById("hero");
       measure();
 
       window.addEventListener("scroll", request, { passive: true });
@@ -1212,6 +1240,10 @@
       if (g.src) {
         var img = el("img");
         img.src = real(g.src); img.alt = g.caption || ""; img.loading = "lazy"; img.decoding = "async";
+        /* the real pixel size reserves the exact box before the file arrives,
+           so a lazy photo never nudges the page (that nudge is what felt like
+           the page scrolling itself) */
+        if (g.w && g.h) { img.width = g.w; img.height = g.h; }
         img.onerror = function () {
           b.classList.add("gshot--empty");
           b.innerHTML = "<span>\u{1F4F7}</span><code>" + esc(g.src) + "</code>";

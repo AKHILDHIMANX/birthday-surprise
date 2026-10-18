@@ -2,83 +2,123 @@
 var PHOTOS = [
   {
     "src": "assets/media/images/01-selfie-nike-jacket.jpg",
-    "caption": "That grin"
+    "caption": "That grin",
+    "w": 1253,
+    "h": 1400
   },
   {
     "src": "assets/media/images/02-rose-portrait.jpg",
-    "caption": "Golden hour"
+    "caption": "Golden hour",
+    "w": 880,
+    "h": 1400
   },
   {
     "src": "assets/media/images/03-cap-chair.jpg",
-    "caption": "Simply you"
+    "caption": "Simply you",
+    "w": 1170,
+    "h": 1313
   },
   {
     "src": "assets/media/images/04-turban-coat.jpg",
-    "caption": "One look"
+    "caption": "One look",
+    "w": 1124,
+    "h": 699
   },
   {
     "src": "assets/media/images/05-butterfly.jpg",
-    "caption": "Soft light"
+    "caption": "Soft light",
+    "w": 1088,
+    "h": 721
   },
   {
     "src": "assets/media/images/06-naval-428.jpg",
-    "caption": "Full frame"
+    "caption": "Full frame",
+    "w": 1182,
+    "h": 665
   },
   {
     "src": "assets/media/images/07-valley-blazer.jpg",
-    "caption": "Little things"
+    "caption": "Little things",
+    "w": 1086,
+    "h": 724
   },
   {
     "src": "assets/media/images/08-valley-portrait.jpg",
-    "caption": "Quiet smile"
+    "caption": "Quiet smile",
+    "w": 859,
+    "h": 914
   },
   {
     "src": "assets/media/images/09-valley-wide.jpg",
-    "caption": "Easy day"
+    "caption": "Easy day",
+    "w": 975,
+    "h": 989
   },
   {
     "src": "assets/media/images/10-cartoons.jpg",
-    "caption": "Big smile"
+    "caption": "Big smile",
+    "w": 768,
+    "h": 1024
   },
   {
     "src": "assets/media/images/11-cartoon-hoodie.jpg",
-    "caption": "Your laugh"
+    "caption": "Your laugh",
+    "w": 768,
+    "h": 1024
   },
   {
     "src": "assets/media/images/12-cartoon-train.jpg",
-    "caption": "Good times"
+    "caption": "Good times",
+    "w": 768,
+    "h": 1024
   },
   {
     "src": "assets/media/images/13-cartoon-nike.jpg",
-    "caption": "Evening glow"
+    "caption": "Evening glow",
+    "w": 768,
+    "h": 1024
   },
   {
     "src": "assets/media/images/14-cartoon-naval.jpg",
-    "caption": "Street light"
+    "caption": "Street light",
+    "w": 768,
+    "h": 1024
   },
   {
     "src": "assets/media/images/15-cartoon-night.jpg",
-    "caption": "City night"
+    "caption": "City night",
+    "w": 768,
+    "h": 1024
   },
   {
     "src": "assets/media/images/16-cartoon-headshot.jpg",
-    "caption": "Centrestage"
+    "caption": "Centrestage",
+    "w": 692,
+    "h": 1136
   },
   {
     "src": "assets/media/images/17-terminus-day.jpg",
-    "caption": "Daylight frame"
+    "caption": "Daylight frame",
+    "w": 665,
+    "h": 1182
   },
   {
     "src": "assets/media/images/18-terminus-night.jpg",
-    "caption": "Night magic"
+    "caption": "Night magic",
+    "w": 665,
+    "h": 1182
   },
   {
     "src": "assets/media/images/19-extra-one.jpg",
-    "caption": "One more"
+    "caption": "One more",
+    "w": 665,
+    "h": 1182
   },
   {
     "src": "assets/media/images/20-extra-two.jpg",
-    "caption": "Extra frame"
+    "caption": "Extra frame",
+    "w": 480,
+    "h": 854
   }
 ];
 var IMGMAP = {

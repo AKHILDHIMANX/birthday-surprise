@@ -22,6 +22,11 @@ No real photos yet? Nothing breaks — the 18 gradient placeholders stay.
 import os
 import json
 
+try:
+    from PIL import Image
+except Exception:
+    Image = None
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 IMG = os.path.join(HERE, "assets", "media", "images")
 OUT = os.path.join(HERE, "assets", "js", "photos.js")
@@ -59,6 +64,18 @@ def stem(name):
     return os.path.splitext(name)[0]
 
 
+def dims(path):
+    """(width, height) of a real image, so the gallery can reserve its box
+    before the file loads — that stops lazy photos from nudging the page."""
+    if Image is None:
+        return None, None
+    try:
+        with Image.open(path) as im:
+            return im.size
+    except Exception:
+        return None, None
+
+
 files = sorted(f for f in os.listdir(IMG) if f.lower().endswith(REAL))
 slots = sorted(f for f in os.listdir(IMG) if f.lower().endswith(".svg"))
 
@@ -69,7 +86,11 @@ for i, f in enumerate(files):
         imgmap["assets/media/images/" + s + ".svg"] = "assets/media/images/" + f
         taken.add(s)
     caption = CAPS.get(s) or SPARE[i % len(SPARE)]
-    photos.append({"src": "assets/media/images/" + f, "caption": caption})
+    entry = {"src": "assets/media/images/" + f, "caption": caption}
+    w, h = dims(os.path.join(IMG, f))
+    if w and h:
+        entry["w"], entry["h"] = w, h
+    photos.append(entry)
 
 # gallery stays full: their photos first, placeholders fill the empty slots
 for s in (stem(x) for x in slots):
