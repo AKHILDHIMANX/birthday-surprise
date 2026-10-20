@@ -365,6 +365,9 @@
   <span class="dock__sep" aria-hidden="true"></span>
   <button class="dock__btn" id="dock-music" type="button" aria-pressed="false">
     <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <!-- the visible title is hidden on screen, so the toggle needs its own
+         spoken name or screen readers only hear an unlabelled button -->
+    <span class="sr-only">Music: <span data-bind="backgroundTrack.title"></span></span>
     <span class="dock__label" data-bind="backgroundTrack.title"></span>
   </button>
   <button class="dock__btn dock__btn--icon" id="dock-top" type="button" title="Back to top">
