@@ -1237,8 +1237,8 @@ main,.topbar,.foot,.dock,.progress,.rail,.mood{ position:relative; z-index:1; }
    A phone GPU chokes on: huge blurred glows drifting, film grain
    repainting, a live backdrop-filter on fixed bars, and a filter pass over
    a full-screen photo on every scroll frame. The story does not change. */
-@media (max-width:860px){
-  .backdrop__glow{ filter:blur(50px); animation:none!important; }
+@media (max-width:860px),(hover:none),(pointer:coarse){
+  .backdrop__glow{ filter:blur(40px); animation:none!important; }
   .backdrop__grain{ display:none; }
   .sunrays.is-on{ animation:none!important; }
   .topbar.is-stuck,.mood,.dock{
@@ -1248,10 +1248,20 @@ main,.topbar,.foot,.dock,.progress,.rail,.mood{ position:relative; z-index:1; }
   .topbar.is-stuck{ background:rgba(255,250,241,.94); }
   .mood{ background:rgba(255,255,255,.92); }
   .dock{ background:rgba(255,250,241,.94); }
-  .scene__bg img{ filter:none; }
+  .scene__bg img{ filter:none; will-change:auto; }
+  /* stop continuous transform animations on fixed/chrome elements */
+  .topbar__star,.door__bolt,.cake__smoke{ animation:none!important; }
+  /* simplify gallery scroll-reveal: let it be seen without per-frame scrub */
+  .gshot{ transform:none!important; transition:opacity .5s var(--e)!important; }
+  .gshot img{ transform:none!important; transition:none!important; }
+  .gshot__cap{ opacity:1!important; transform:none!important; }
 }
 
-/* no-motion / reduced motion: unpin everything into plain blocks */
+/* reduced motion: unpin everything into plain blocks */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; scroll-behavior:auto!important; }
+  .backdrop__glow,.backdrop__grain,.sunrays,.topbar__star,.door__bolt,.cake__smoke,.gshot,.gshot img{ animation:none!important; transition:none!important; }
+}
 html.no-motion .scene{ height:auto }
 html.no-motion .scene__pin{ position:relative; height:auto; padding-block:clamp(3.5rem,9vh,6rem); overflow:visible }
 html.no-motion .scene__bg{ position:relative; inset:auto; height:50svh; margin-bottom:clamp(1.5rem,4vh,2.5rem); opacity:1 }

@@ -25,8 +25,10 @@
      wheel events makes the page carry on by itself and stutter, so phones
      keep plain native scrolling. */
   var FINE_POINTER = !!(window.matchMedia && window.matchMedia("(hover:hover) and (pointer:fine)").matches);
-  /* phones / small screens: same story, lighter per-frame effects */
-  var LITE = !!(window.matchMedia && window.matchMedia("(max-width:860px), (hover:none)").matches);
+  /* phones / small screens / save-data: as lean as possible to kill scroll
+     buffers. On these we drop most per-frame scroll effects entirely. */
+  var SAVE_DATA = !!(navigator.connection && navigator.connection.saveData);
+  var LITE = SAVE_DATA || !!(window.matchMedia && window.matchMedia("(max-width:860px), (hover:none), (pointer:coarse)").matches);
 
   var esc = function (s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -342,14 +344,17 @@
           vx: .18 + Math.random() * .4, vy: -.03,
           r: 90 + Math.random() * 190, a: .035 + Math.random() * .055, ph: Math.random() * 6.283 });
       } else if (mode === "summer" || mode === "dusk") {
+        if (LITE) return;
         bits.push({ k: "fly", x: Math.random() * W, y: Math.random() * H,
           vx: (Math.random() - .5) * .34, vy: -.08 - Math.random() * .2,
           r: .9 + Math.random() * 1.7, a: .3 + Math.random() * .45, ph: Math.random() * 6.283,
           c: mode === "dusk" ? "#ffd79a" : "#ffe9a8" });
       } else if (mode === "night") {
+        if (LITE) return;
         bits.push({ k: "star", x: Math.random() * W, y: Math.random() * H * .85,
           r: .6 + Math.random() * 1.5, a: .2 + Math.random() * .7, ph: Math.random() * 6.283 });
       } else if (mode === "dawn") {
+        if (LITE) return;
         bits.push({ k: "fly", x: Math.random() * W, y: H * (.2 + Math.random() * .8),
           vx: (Math.random() - .5) * .28, vy: .06 + Math.random() * .16,
           r: 1 + Math.random() * 1.9, a: .25 + Math.random() * .4, ph: Math.random() * 6.283, c: "#ffd6a0" });
@@ -359,7 +364,8 @@
     function step() {
       t++;
       var n = W < 700 ? 1 : 2;
-      var cap = (mode === "rain" || mode === "storm") ? (LITE ? 110 : 260) : (LITE ? 44 : 90);
+      if (LITE) n = 1;
+      var cap = (mode === "rain" || mode === "storm") ? (LITE ? 60 : 260) : (LITE ? 24 : 90);
       for (var q = 0; q < n; q++) if (bits.length < cap) spawn();
 
       for (var i = bits.length - 1; i >= 0; i--) {
@@ -413,9 +419,9 @@
       rafId = raf(loop);
     }
     function loop() {
-      /* phones run the weather at ~30fps — plenty for ambient rain/snow, and
+      /* phones run the weather at ~20fps — plenty for ambient rain/snow, and
          it leaves the frame budget to the scroll itself */
-      if (LITE && (frame++ & 1)) { rafId = raf(loop); return; }
+      if (LITE && (frame++ % 3)) { rafId = raf(loop); return; }
       step();
     }
 
@@ -769,6 +775,34 @@
          re-layout for every element; batching reads first removes that
          "layout thrash" that made phones stutter mid-scroll. */
       var heroH = heroEl ? heroEl.offsetHeight : 0;
+      if (LITE) {
+        /* on phones we keep only the bare minimum. Hero parallax, scene
+           scrub, word-reveal and mood switching are essential for the story.
+           Everything else (journey/vcards/gshots scrub) is static to save the
+           frame budget for pure scroll. */
+        if (heroEl && heroH) heroEl.style.setProperty("--sp", clamp(y / heroH, 0, 1).toFixed(4));
+        for (i = 0; i < scenes.length; i++) {
+          s = scenes[i];
+          if (y + vh < s.top || y > s.top + s.len + vh) continue;
+          p = clamp((y - s.top) / s.len, 0, 1);
+          s.el.style.setProperty("--p", p.toFixed(4));
+          if (s.el._mood && s.el._mood !== mood && p > 0 && p < 1) { mood = s.el._mood; Weather.set(mood); }
+        }
+        for (i = 0; i < reads.length; i++) {
+          var r = reads[i];
+          if (!r.words.length || !r.scene) continue;
+          var rp = parseFloat(r.scene.style.getPropertyValue("--p"));
+          if (isNaN(rp)) continue;
+          var reach = clamp((rp - .30) / .34, 0, 1) * r.words.length;
+          for (var k = 0; k < r.words.length; k++) {
+            var kv = clamp(reach - k, 0, 1);
+            if (kv === r.state[k]) continue;
+            r.state[k] = kv;
+            r.words[k].classList.toggle("lit", kv > .45);
+            r.words[k].classList.toggle("now", kv > .05 && kv <= .45);
+          }
+        }
+      } else {
       var eRect = eEl ? eEl.getBoundingClientRect() : null;
       var jRect = (jEl && jTrack) ? jEl.getBoundingClientRect() : null;
       var jShow = !!(jRect && jRect.bottom > -100 && jRect.top < vh + 100);
@@ -853,6 +887,7 @@
           vCards[i].style.setProperty("--vp", cv.toFixed(3));
           vCards[i].classList.toggle("is-live", cv > .58);
         }
+      }
       }
       dirty = false;
     }
