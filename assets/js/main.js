@@ -787,31 +787,16 @@
          "layout thrash" that made phones stutter mid-scroll. */
       var heroH = heroEl ? heroEl.offsetHeight : 0;
       if (LITE) {
-        /* on phones we keep only the bare minimum. Hero parallax, scene
-           scrub, word-reveal and mood switching are essential for the story.
-           Everything else (journey/vcards/gshots scrub) is static to save the
-           frame budget for pure scroll. */
-        if (heroEl && heroH) heroEl.style.setProperty("--sp", clamp(y / heroH, 0, 1).toFixed(4));
+        /* phones: scene scrub + mood only. Hero parallax and per-word reveal
+           (which toggled classes on dozens of spans every frame) are dropped;
+           words are shown fully via CSS to remove that scroll-jank source. */
+        if (heroEl) heroEl.style.setProperty("--sp", "0");
         for (i = 0; i < scenes.length; i++) {
           s = scenes[i];
           if (y + vh < s.top || y > s.top + s.len + vh) continue;
           p = clamp((y - s.top) / s.len, 0, 1);
           s.el.style.setProperty("--p", p.toFixed(4));
           if (s.el._mood && s.el._mood !== mood && p > 0 && p < 1) { mood = s.el._mood; Weather.set(mood); }
-        }
-        for (i = 0; i < reads.length; i++) {
-          var r = reads[i];
-          if (!r.words.length || !r.scene) continue;
-          var rp = parseFloat(r.scene.style.getPropertyValue("--p"));
-          if (isNaN(rp)) continue;
-          var reach = clamp((rp - .30) / .34, 0, 1) * r.words.length;
-          for (var k = 0; k < r.words.length; k++) {
-            var kv = clamp(reach - k, 0, 1);
-            if (kv === r.state[k]) continue;
-            r.state[k] = kv;
-            r.words[k].classList.toggle("lit", kv > .45);
-            r.words[k].classList.toggle("now", kv > .05 && kv <= .45);
-          }
         }
       } else {
       var eRect = eEl ? eEl.getBoundingClientRect() : null;

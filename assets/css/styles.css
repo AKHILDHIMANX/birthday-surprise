@@ -1249,6 +1249,8 @@ main,.topbar,.foot,.dock,.progress,.rail,.mood{ position:relative; z-index:1; }
   .mood{ background:rgba(255,255,255,.92); }
   .dock{ background:rgba(255,250,241,.94); }
   .scene__bg img{ filter:none; will-change:auto; }
+  /* words fully visible on phones (no per-frame reveal loop) */
+  .scene__body .rw{ opacity:1!important; color:var(--ink); }
   /* stop continuous transform animations on fixed/chrome elements */
   .topbar__star,.door__bolt,.cake__smoke{ animation:none!important; }
   /* simplify gallery scroll-reveal: let it be seen without per-frame scrub */
