@@ -1255,6 +1255,10 @@ main,.topbar,.foot,.dock,.progress,.rail,.mood{ position:relative; z-index:1; }
   .gshot{ transform:none!important; transition:opacity .5s var(--e)!important; }
   .gshot img{ transform:none!important; transition:none!important; }
   .gshot__cap{ opacity:1!important; transform:none!important; }
+  /* hide the now-unused particle canvas layer */
+  #fx-canvas{ display:none; }
+  /* skip rendering off-screen cards until they approach the viewport */
+  .card,.chat,.tl__item,.player{ content-visibility:auto; contain-intrinsic-size:auto 200px; }
 }
 
 /* reduced motion: unpin everything into plain blocks */

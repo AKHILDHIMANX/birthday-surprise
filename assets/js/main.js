@@ -441,7 +441,10 @@
     function set(next) {
       if (MOODS[next]) mode = next;
       paint();
-      if (REDUCED) return;
+      /* on phones the particle canvas is off entirely — the mood glows
+         (CSS) already carry the season, and the rAF loop would only fight
+         the scroll. */
+      if (REDUCED || LITE) return;
       if (!on) { on = true; rafId = raf(loop); }
     }
     set(MOOD_KEYS[0]);
@@ -740,7 +743,7 @@
     var jEl = null, jTrack = null, eEl = null;
     var gEl = null, gShots = [];
     var vEl = null, vTrack = null, vCards = [], vFill = null;
-    var vh = 0, vw = 0, dirty = true, queued = false, mood = null, heroEl = null;
+    var vh = 0, vw = 0, dirty = true, queued = false, mood = null, heroEl = null, lastUp = 0;
 
     function measure() {
       vh = window.innerHeight; vw = window.innerWidth;
@@ -767,6 +770,14 @@
     }
 
     function update() {
+      if (!dirty) return;
+      /* on phones, cap the director at ~30fps so layout work never piles up
+         behind the scroll; desktop keeps the full 60fps scrub. */
+      if (LITE) {
+        var now = Date.now();
+        if (now - lastUp < 33) { setTimeout(function () { if (dirty) update(); }, 33 - (now - lastUp)); return; }
+        lastUp = now;
+      }
       var y = window.pageYOffset || document.documentElement.scrollTop;
       var i, s, p;
 
@@ -1275,6 +1286,7 @@
       if (g.src) {
         var img = el("img");
         img.src = real(g.src); img.alt = g.caption || ""; img.loading = "lazy"; img.decoding = "async";
+        img.fetchPriority = "low";
         /* the real pixel size reserves the exact box before the file arrives,
            so a lazy photo never nudges the page (that nudge is what felt like
            the page scrolling itself) */
